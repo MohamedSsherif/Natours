@@ -12,10 +12,10 @@ const aliasTopTours = (req,res,next)=>{
 const getAllTours=async (req,res)=>{
     try{
         //EXECUTE QUERY
-        const features= new APIFeatures(Tour.find(),req.query)
+        let features= new APIFeatures(Tour.find(),req.query)
         .filter()
-        .sort()
-        .limitFields()
+        .customSort()
+        .custuomFieldLimit()
         .Pagination();
         const tours = await features.query;
     
