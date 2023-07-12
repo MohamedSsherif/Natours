@@ -13,8 +13,7 @@ class APIFeatures{
         let queryStr = JSON.stringify(queryObj);
         queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g,match => `$${match}`);
 
-
-        this.query = Tour.find(JSON.parse(queryStr));
+        this.query = this.query.find(JSON.parse(queryStr));
 
         return this;
     }
@@ -25,9 +24,9 @@ class APIFeatures{
         } else{
             this.query = this.query.sort('-createdAt');
         }
-        return this;
+        return query;
     }
-    fieldlimiting(){
+    limitFields(){
         if(this.queryString.fields){
             const fields = this.queryString.fields.split(',').join(' ');
             this.query = this.query.select(fields);

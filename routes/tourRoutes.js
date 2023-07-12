@@ -12,6 +12,14 @@ tourRouter
 //tourRouter.param('id',tourController.checkID);
 
 tourRouter
+   .route('/tour-stats')
+   .get(tourController.getTourStatstics);
+
+tourRouter
+   .route('/monthly-plan/:year')
+   .get(tourController.getMonthlyPlan);
+
+tourRouter
    .route('/')
    .get(tourController.getAllTours)
    .post(tourController.createTour)
