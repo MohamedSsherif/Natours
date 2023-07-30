@@ -43,6 +43,11 @@ const userSchema = new moongose.Schema({
     passwordChangedAt: Date,
     passwordResetToken:String,
     passwordResetExpires:Date,
+    active:{
+        type:Boolean,
+        default:true,
+        select:false
+    }
 })
 
 //Document middleware: runs before .save() and .create()  (between recieve data and save it to database)
@@ -59,6 +64,12 @@ userSchema.pre('save', async function (next) {
 userSchema.pre('save',function(next){
     if(!this.isModified('password') || this.isNew) return next();
     this.passwordChangedAt = Date.now() - 1000; //1000ms before the token is issued
+    next();
+})
+
+userSchema.pre(/^find/,function(next){
+    //this points to the current query
+    this.find({active:{$ne:false}});
     next();
 })
 
