@@ -9,7 +9,12 @@ const Tour = require('./../../models/tourModel');
 
 dotenv.config({path:'./config.env'});
 
-const DB = process.env.DATABASE.replace('<PASSWORD>',process.env.DATABASE_PASSWORD);
+// if (!process.env.DATABASE_URL || !process.env.DATABASE_PASSWORD) {
+//     throw new Error('Missing environment variables: DATABASE or DATABASE_PASSWORD');
+//   }
+
+
+const DB = process.env.DATABASE_URL.replace('<PASSWORD>',process.env.DATABASE_PASSWORD);
 
 
 
@@ -22,11 +27,14 @@ mongoose.connect(DB,{
     console.log('DB connection successful');
 })
 
+
 //read json file
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours-simple.json`,'utf-8'));
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`,'utf-8'));
+
 
 //import data into database
 const importData = async ()=>{
+    console.log(tours);
     try{
         await Tour.create(tours);
         console.log('Data successfully loaded');
@@ -54,4 +62,4 @@ if(process.argv[2]==='--import'){
     deleteData();
 }
 
-//console.log(process.argv);
+// console.log(process.argv);

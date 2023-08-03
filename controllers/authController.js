@@ -15,12 +15,12 @@ const signToken = id => {
 
 const createSendToken = (user,statusCode,res) => {
     const token = signToken(user._id)   ;
-    // const cookieOptions = {
-    //     expires:new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
-    //     httpOnly:true
-    // }
-    // if(process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-    // res.cookie('jwt',token,cookieOptions);
+    const cookieOptions = {
+        expires:new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+        httpOnly:true
+    }
+    if(process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+    res.cookie('jwt',token,cookieOptions);
 
     //Remove password from output
     user.password = undefined;
@@ -32,6 +32,8 @@ const createSendToken = (user,statusCode,res) => {
         }
     })
 }
+
+
 exports.signup = catchAsync(async (req,res,next) => {
     try{
         const newUSer = await User.create({
@@ -42,7 +44,6 @@ exports.signup = catchAsync(async (req,res,next) => {
             role:req.body.role
         });
         createSendToken(newUSer,201,res);
-
     }catch(err){
         res.status(400).json({
             status:'fail',
@@ -68,7 +69,21 @@ exports.login = catchAsync(async (req,res,next) => {
         return next(new Apperror('Incorrect email or password',401));
     }
 
-
+    if(!user.active){
+        return next(new Apperror('This user is no longer active',401));
+    }
+ 
+   // for more wrong attempts to login wait 30 min before next attempt
+    // if(user.wrongAttempts >= 3){
+    //     const time = new Date().getTime();
+    //     const time2 = new Date(user.lastWrongAttempt).getTime();
+    //     const diff = time - time2;
+    //     const minutes = Math.floor((diff/1000)/60);
+    //     if(minutes < 30){
+    //         return next(new Apperror(`You have to wait ${30 - minutes} minutes before next attempt`,401));
+    //     }
+    // }
+     
 
     //3) If everything ok, send token to client
     createSendToken(user,200,res);
@@ -184,8 +199,6 @@ exports.resetPassword = catchAsync(async (req,res,next) => {
     await user.save();
     //Update changedPasswordAt property for the user
     
-
-
     //Log the user in, send JWT
     createSendToken(user,200,res);
         
@@ -208,9 +221,4 @@ exports.resetPassword = catchAsync(async (req,res,next) => {
         //User.findByIdAndUpdate will NOT work as intended!
     // 4) Log user in, send JWT
     createSendToken(user,200,res);
-    
-
  })
-
-
-
