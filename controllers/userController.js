@@ -2,6 +2,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('./../utils/catchAsync');
 const Apperror = require('./../utils/appError');
 const fs = require('fs');
+const factory = require('./handlerFactory');
 
 
 // const users = JSON.parse(
@@ -16,20 +17,6 @@ const filterObj = (obj, ...allowedFields) =>{
 }
 
 
-const getAllUsers = catchAsync(async(req,res,next)=>{
-    try{
-    const users = await User.find();
-    res.status(200).json({
-        status:'success',
-        results:users.length,
-        data:{
-            users
-        }
-    }) 
-}catch(err){
-    return next(new Apperror('Something went wrong',500));
-}
-})
 
 const updateMe =  catchAsync( async (req,res,next) => {
    
@@ -56,6 +43,11 @@ const updateMe =  catchAsync( async (req,res,next) => {
 
 })
 
+const getMe = (req,res,next)=>{
+    req.params.id = req.user.id;
+    next();
+}
+
 const deleteMe = catchAsync(async(req,res,next)=>{
     await User.findByIdAndUpdate(req.user.id,{active:false});
     res.status(204).json({
@@ -64,12 +56,8 @@ const deleteMe = catchAsync(async(req,res,next)=>{
     })
 })
 
-const getOneUser=(req,res)=>{
-    res.status(500).json({
-        status:'error',
-        message:'This route is not yet defined'
-    });
-}
+
+
 
 const createUser=(req,res)=>{
     res.status(500).json({
@@ -78,20 +66,12 @@ const createUser=(req,res)=>{
     });
 }
 
+const getOneUser = factory.getOne(User);
+const getAllUsers = factory.getAll(User);
+//Do not update passwords with this
+const updateUser = factory.updateOne(User); 
 
-const updateUser=(req,res)=>{
-    res.status(500).json({
-        status:'error',
-        message:'This route is not yet defined'
-    });
-}
-
-const deleteUser=(req,res)=>{
-    res.status(500).json({
-        status:'error',
-        message:'This route is not yet defined'
-    });
-}
+const deleteUser = factory.deleteOne(User);
 
 
 module.exports = {
@@ -101,5 +81,6 @@ module.exports = {
     updateUser,
     deleteUser,
     updateMe,
-    deleteMe
+    deleteMe,
+    getMe
 }

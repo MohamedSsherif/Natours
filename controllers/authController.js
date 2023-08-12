@@ -69,7 +69,7 @@ exports.login = catchAsync(async (req,res,next) => {
         return next(new Apperror('Incorrect email or password',401));
     }
 
-    if(!user.active){
+    if(user.active==false){
         return next(new Apperror('This user is no longer active',401));
     }
  
