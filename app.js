@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 //middle ware that allow to see req date in console
 const morgan = require('morgan');
@@ -13,10 +14,19 @@ const globalErrorhandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const userRouter = require('./routes/userRoutes');
+const viewRouter = require('./routes/viewRoutes');
+
 const app = express();
 
+app.set('view engine','pug');
+app.set('views',path.join(__dirname,'views'));
 
 // 1)Global MIDDLEWARES
+
+//Serving static files
+app.use(express.static(path.join(__dirname,'public')));
+
+
 //Set security HTTP headers
 app.use(helmet());
 
@@ -57,8 +67,8 @@ app.use(hpp({
     ]
 }))
 
-//Serving static files
-app.use(express.static(`${__dirname}/public`));
+
+
 
 
 //Test middleware
@@ -74,6 +84,8 @@ app.use((req,res,next)=>{
 app.use('/api/v1/tours',tourRouter);
 app.use('/api/v1/users',userRouter);
 app.use('/api/v1/reviews',reviewRouter);
+app.use('/',viewRouter);
+
 
 
 app.all('*',(req,res,next)=>{
