@@ -72,19 +72,6 @@ exports.login = catchAsync(async (req,res,next) => {
     if(user.active==false){
         return next(new Apperror('This user is no longer active',401));
     }
- 
-   // for more wrong attempts to login wait 30 min before next attempt
-    // if(user.wrongAttempts >= 3){
-    //     const time = new Date().getTime();
-    //     const time2 = new Date(user.lastWrongAttempt).getTime();
-    //     const diff = time - time2;
-    //     const minutes = Math.floor((diff/1000)/60);
-    //     if(minutes < 30){
-    //         return next(new Apperror(`You have to wait ${30 - minutes} minutes before next attempt`,401));
-    //     }
-    // }
-     
-
     //3) If everything ok, send token to client
     createSendToken(user,200,res);
   
@@ -94,12 +81,24 @@ exports.login = catchAsync(async (req,res,next) => {
 
 })
 
+exports.logout = (req,res) => {
+    res.cookie('jwt','loggedout',{
+        expires:new Date(Date.now() + 10 * 1000),
+        httpOnly:true
+    })
+    res.status(200).json({
+        status:'success'
+    })
+}
+
 exports.protect = catchAsync(async (req,res,next) => {
     try{
     //1) Getting token and check of it's there
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
+    } else if(req.cookies.jwt){
+        token = req.cookies.jwt;
     }
     if(!token){
         return next(new Apperror('You are not logged in! Please log in to get access',401));
@@ -122,11 +121,43 @@ exports.protect = catchAsync(async (req,res,next) => {
 
     //GRANT ACCESS TO PROTECTED ROUTE
         req.user = currentUser;
+        res.locals.user = currentUser;
         next();
     }catch(err){
          return next(new Apperror('Something went wrong',500));
 }
 })
+
+//Only for rendered pages, no errors!
+exports.isLoggedIn = async (req,res,next) => {
+    try{
+     if(req.cookies.jwt){
+     
+    //1) Verification token    
+    const decoded = await promisify(jwt.verify)(req.cookies.jwt ,process.env.JWT_SECRET);
+    // console.log(decoded);
+
+    //3) Check if user still exists
+    const currentUser = await User.findById(decoded.id);
+    if(!currentUser){
+        return next();
+    }
+
+    //4) Check if user changed password after the token was issued
+    if(currentUser.changedPasswordAfter(decoded.iat)){
+        return next();
+    }
+
+    //THERE IS A LOGGED IN USER
+        res.locals.user = currentUser;    
+        return next();
+    }
+} catch(err){
+    return next();
+}
+    next();
+    
+}
 
 exports.restrictTo = (...roles) => {
     return (req,res,next) => {
@@ -221,4 +252,4 @@ exports.resetPassword = catchAsync(async (req,res,next) => {
         //User.findByIdAndUpdate will NOT work as intended!
     // 4) Log user in, send JWT
     createSendToken(user,200,res);
- })
+ })   

@@ -15,6 +15,9 @@ userRouter
  .post('/login', authController.login);
 
 userRouter
+ .get('/logout', authController.logout);
+
+userRouter
  .post('/forgotPassword', authController.forgotPassword);
 
 userRouter
